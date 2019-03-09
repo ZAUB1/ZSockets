@@ -1,0 +1,19 @@
+{
+  "name": "zsockets",
+  "version": "1.0.0",
+  "description": "Fully standard and standalone socket lib based on net from node",
+  "main": "socket.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zaub1/ZSockets.git"
+  },
+  "author": "ZAUB1",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/zaub1/ZSockets/issues"
+  },
+  "homepage": "https://github.com/zaub1/ZSockets#readme"
+}
