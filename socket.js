@@ -107,16 +107,22 @@ class ServerClient {
             for (let i = 0; i < this.events[n].length; i++)
                 if (this.events[n][i])
                     this.events[n][i](obj);
+                else
+                    return;
         }
     }
 
     On(n, cb)
     {
         if (this.events[n])
+        {
             this.events[n][this.events[n].length] = cb;
+        }
         else
+        {
             this.events[n] = [];
             this.events[n][this.events[n].length] = cb;
+        }
     }
 }
 
@@ -154,16 +160,22 @@ class Client {
             for (let i = 0; i < this.events[n].length; i++)
                 if (this.events[n][i])
                     this.events[n][i](obj);
+                else
+                    return;
         }
     }
 
     On(n, cb)
     {
         if (this.events[n])
+        {
             this.events[n][this.events[n].length] = cb;
+        }
         else
+        {
             this.events[n] = [];
             this.events[n][this.events[n].length] = cb;
+        }
     }
 
     Emit(n, obj)
