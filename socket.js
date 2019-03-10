@@ -74,6 +74,13 @@ class Server {
             this.events[n][this.events[n].length] = cb;
         }
     }
+
+    EmitToAll(n, obj)
+    {
+        this.clients.forEach((e) => {
+            e.Emit(n, obj);
+        });
+    }
 };
 
 class ServerClient {

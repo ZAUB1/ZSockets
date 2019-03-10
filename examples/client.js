@@ -7,3 +7,7 @@ Client.On("testevent", () => {
 
     Client.Emit("testbackclient", {})
 });
+
+Client.On("testall", () => {
+    console.log("All clients yay !");
+});

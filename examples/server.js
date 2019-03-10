@@ -17,3 +17,7 @@ Server.OnInternal("connection", (c) => {
         console.log("Back from specific client");
     });
 });
+
+setInterval(() => {
+    Server.EmitToAll("testall", {});
+}, 1000);
