@@ -90,6 +90,7 @@ class ServerClient {
     {
         this.c = c;
         this.ip = c.remoteAddress;
+        this.id = c.id;
 
         this.events = [];
     }
