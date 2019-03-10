@@ -61,6 +61,7 @@ Client.On("testall", () => {
   - [Class: Client object (Server Side)](#clientobjectserverside)
 	  -	[Client.On(event[, callback])](#client.onevent-callback)
 	-	[Client.Emit(event[, object])](#client.emitevent-object)
+	- [Client.Ip](#client.ip)
 - [Class: Client](#client)
 	 -	[Client.On(event[, callback])](#client.onevent-callback)
 	-	[Client.Emit(event[, object])](#client.emitevent-object)
@@ -93,6 +94,8 @@ Client.On("testall", () => {
 #### Client.Emit(event[, object])
 - `event` _(string)_ Event name to trigger on client
 - `object` _(Object)_
+#### Client.ip _(string)_
+Contains the client ip.
 
 ### Client
 #### Client.On(event[, callback])
