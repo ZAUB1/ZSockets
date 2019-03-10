@@ -57,16 +57,22 @@ class Server {
             for (let i = 0; i < this.events[n].length; i++)
                 if (this.events[n][i])
                     this.events[n][i](...args);
+                else
+                    return;
         }
     }
 
     OnInternal(n, cb)
     {
         if (this.events[n])
+        {
             this.events[n][this.events[n].length] = cb;
+        }
         else
+        {
             this.events[n] = [];
             this.events[n][this.events[n].length] = cb;
+        }
     }
 };
 
