@@ -52,6 +52,18 @@ Client.On("testall", () => {
 });
 ```
 ## Documentation
+### Table of Contents
+
+  - [Class: Server](#server)
+    - [new Socket.Server(port[, callback])](#new-socket.serverport-callback)
+    - [Server.OnInternal(event[, callback])](#server.oninternalevent-callback)
+    -	[Server.EmitToAll(event[, object])](#server.emittoallevent-object)
+  - [Class: Client object (Server Side)](#clientobjectserverside)
+	  -	[Client.On(event[, callback])](#client.onevent-callback)
+	-	[Client.Emit(event[, object])](#client.emitevent-object)
+- [Class: Client](#client)
+	 -	[Client.On(event[, callback])](#client.onevent-callback)
+	-	[Client.Emit(event[, object])](#client.emitevent-object)
 ### Server
 
 #### new Socket.Server(port[, callback])
