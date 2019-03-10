@@ -98,6 +98,9 @@ Client.On("testall", () => {
 Contains the client ip.
 
 ### Client
+#### new Socket.Client(ip, port)
+  - `ip` _(string)_ The ip of the server
+  - `port` _(int)_ The port of the server
 #### Client.On(event[, callback])
 - `event` _(string)_ The client event name to listen for server trigger
 - `callback` _(function)_
