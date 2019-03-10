@@ -10,7 +10,7 @@ ZSockets is fairly simple to use, here are few examples on the way to use it :
 Sample code:
 
 ```js
-const Socket = require("../socket");
+const Socket = require("zsockets");
 const port = 500;
 
 const Server = new Socket.Server(port, () => { //Creates the server
@@ -37,7 +37,7 @@ setInterval(() => {
 Sample code:
 
 ```js
-const Socket = require("../socket");
+const Socket = require("zsockets");
 const Client = new Socket.Client("127.0.0.1", 500); //Connecting to the server
 
 Client.On("testevent", () => { //Event triggered from server
