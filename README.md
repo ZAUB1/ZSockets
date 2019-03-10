@@ -63,6 +63,7 @@ Client.On("testall", () => {
 	-	[Client.Emit(event[, object])](#client.emitevent-object)
 	- [Client.Ip](#client.ip)
 - [Class: Client](#client)
+	- 	[new Socket.Client(ip, port)](#new-socket.clientipport)
 	 -	[Client.On(event[, callback])](#client.onevent-callback)
 	-	[Client.Emit(event[, object])](#client.emitevent-object)
 ### Server
