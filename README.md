@@ -68,3 +68,16 @@ Client.On("testall", () => {
 	- `"cerror"`: Triggered when one of the clients occurs an error
 		- Returns error _(Object)_
 	
+- `callback` _(function)_
+#### Server.EmitToAll(event[, object])
+- `event` _(string)_ Event name to trigger on all clients connected
+- `object` _(Object)_
+
+### Client object (server side)
+
+#### Client.On(event[, callback])
+- `event` _(string)_ The server event name to listen for client trigger
+- `callback` _(function)_
+#### Client.Emit(event[, object])
+- `event` _(string)_ Event name to trigger on client
+- `object` _(Object)_
