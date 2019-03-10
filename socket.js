@@ -125,9 +125,20 @@ class Client {
     {
         this.events = [];
 
+        this.events["connect"] = [];
+        this.events["disconnect"] = [];
+
         this.client = new net.Socket();
 
         this.client.connect(port, ip);
+
+        this.client.on("connect", () => {
+            this.Event("connect", {});
+        });
+
+        this.client.on("end", () => {
+            this.Event("disconnect", {});
+        })
 
         this.client.on("data", (data) => {
             const dec = JSON.parse(data);
