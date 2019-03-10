@@ -97,6 +97,8 @@ Client.On("testall", () => {
 - `object` _(Object)_
 #### Client.ip _(string)_
 Contains the client ip.
+#### Client.id _(int)_
+Contains the client unique id.
 
 ### Client
 #### new Socket.Client(ip, port)
@@ -104,6 +106,8 @@ Contains the client ip.
   - `port` _(int)_ The port of the server
 #### Client.On(event[, callback])
 - `event` _(string)_ The client event name to listen for server trigger
+	- `"connect"`: Triggered when connected to server
+	- `"disconnect"`: Triggered when disconnected from server
 - `callback` _(function)_
 #### Client.Emit(event[, object])
 - `event` _(string)_ Event name to trigger on server
