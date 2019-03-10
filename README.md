@@ -1,3 +1,4 @@
+
 # ZSockets
 
 ZSockets is a fully standalone socket library built on top of the net standard library from node.
@@ -50,3 +51,20 @@ Client.On("testall", () => {
     console.log("All clients yay !");
 });
 ```
+## Documentation
+### Server
+
+#### new Socket.Server(port[, callback])
+  - `port` _(int)_ The port on which the clients will connect to the server.
+  - `callback` _(function)_
+#### Server.OnInternal(event[, callback])
+- `event` _(string)_ The internal event name to listen to
+	- `"connection"`: Triggered when a new client connects
+		- Returns client _(Object)_
+	- `"disconnected"`: Triggered when a client disconnects
+		- Returns client _(Object)_
+	- `"error"`: Triggered when the server occurs an error
+		- Returns error _(Object)_
+	- `"cerror"`: Triggered when one of the clients occurs an error
+		- Returns error _(Object)_
+	
