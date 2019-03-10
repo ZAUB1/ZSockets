@@ -73,13 +73,13 @@ Client.On("testall", () => {
 #### Server.OnInternal(event[, callback])
 - `event` _(string)_ The internal event name to listen to
 	- `"connection"`: Triggered when a new client connects
-		- Returns client _(Object)_
+		- Callback contains client _(Object)_
 	- `"disconnected"`: Triggered when a client disconnects
-		- Returns client _(Object)_
+		- Callback contains client _(Object)_
 	- `"error"`: Triggered when the server occurs an error
-		- Returns error _(Object)_
+		- Callback contains error _(Object)_
 	- `"cerror"`: Triggered when one of the clients occurs an error
-		- Returns error _(Object)_
+		- Callback contains error _(Object)_
 	
 - `callback` _(function)_
 #### Server.EmitToAll(event[, object])
