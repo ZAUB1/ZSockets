@@ -81,3 +81,11 @@ Client.On("testall", () => {
 #### Client.Emit(event[, object])
 - `event` _(string)_ Event name to trigger on client
 - `object` _(Object)_
+
+### Client
+#### Client.On(event[, callback])
+- `event` _(string)_ The client event name to listen for server trigger
+- `callback` _(function)_
+#### Client.Emit(event[, object])
+- `event` _(string)_ Event name to trigger on server
+- `object` _(Object)_
