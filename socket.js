@@ -30,6 +30,8 @@ class Server {
         this.OnInternal("connection", (c) => {
             c.c.on("end", () => {
                 this.InternalEvent("disconnected", this.clients[c.id]);
+
+                this.clients.splice(c.id, 1);
             });
 
             c.c.on("error", (err) => {
