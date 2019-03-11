@@ -1,4 +1,4 @@
-const net = require("net")
+const net = require("net");
 
 class Server {
     constructor(port, cb)
@@ -184,7 +184,82 @@ class Client {
     }
 };
 
+class WebSocketServer {
+    constructor(port, cb)
+    {
+        this.events = [];
+
+        this.events["connection"] = [];
+        this.events["error"] = [];
+        this.events["disconnected"] = [];
+
+        const http = require('http');
+
+        const wserver = http.createServer((req, res) => {
+            req.addListener('end', () => {console.log("ERRR")});
+        });
+
+        wserver.listen(port);
+
+        wserver.on("upgrade", (req, socket) => {
+            if (req.headers['upgrade'] !== 'websocket')
+            {
+                socket.end('HTTP/1.1 400 Bad Request');
+                return;
+            }
+        });
+
+        wserver.on("connection", (c) => {
+            c.on("end", () => {
+            })
+
+            c.on('data', chunk => {
+                let bdata = chunk.toString();
+                let lastw = "";
+                let wtforevent = false;
+
+                for (let i = 0; i < bdata.length; i++)
+                {
+                    if (bdata[i] != " ")
+                    {
+                        if (bdata[i] != "/")
+                            lastw += bdata[i];
+                    }
+                    else
+                    {
+                        if (lastw == "GET")
+                            wtforevent = true;
+                        else if (wtforevent)
+                        {
+                            const res = JSON.parse(decodeURIComponent(lastw));
+                            this.Event(res.n, res.obj);
+
+                            return;
+                        }
+
+                        lastw = "";
+                    }
+                }
+            });
+        });
+
+        if (cb)
+            cb();
+    }
+
+    On(n, cb)
+    {
+        
+    }
+
+    Event(n, obj)
+    {
+        console.log(n)
+    }
+}
+
 module.exports = {
     Server: Server,
-    Client: Client
-};
+    Client: Client,
+    WebSocketServer: WebSocketServer
+}; 
