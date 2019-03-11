@@ -193,6 +193,8 @@ class WebSocketServer {
         this.events["error"] = [];
         this.events["disconnected"] = [];
 
+        this.clients = [];
+
         const http = require('http');
 
         const wserver = http.createServer((req, res) => {
@@ -210,11 +212,19 @@ class WebSocketServer {
         });
 
         wserver.on("connection", (c) => {
+            c.id = Math.floor(Math.random() * 1000);
+            this.clients[c.id] = new WebSocketClient(c);
+
+            this.Event("connection", this.clients[c.id]);
+
             c.on("end", () => {
+                this.Event("disconnected", this.clients[c.id]);
+
+                this.clients.splice(c.id, 1);
             })
 
             c.on('data', chunk => {
-                let bdata = chunk.toString();
+                const bdata = chunk.toString();
                 let lastw = "";
                 let wtforevent = false;
 
@@ -232,7 +242,7 @@ class WebSocketServer {
                         else if (wtforevent)
                         {
                             const res = JSON.parse(decodeURIComponent(lastw));
-                            this.Event(res.n, res.obj);
+                            this.clients[c.id].Event(res.n, res.obj);
 
                             return;
                         }
@@ -247,14 +257,73 @@ class WebSocketServer {
             cb();
     }
 
-    On(n, cb)
+    OnInternal(n, cb)
     {
-        
+        if (this.events[n])
+        {
+            this.events[n][this.events[n].length] = cb;
+        }
+        else
+        {
+            this.events[n] = [];
+            this.events[n][this.events[n].length] = cb;
+        }
     }
 
     Event(n, obj)
     {
-        console.log(n)
+        if (this.events[n])
+        {
+            for (let i = 0; i < this.events[n].length; i++)
+                if (this.events[n][i])
+                    this.events[n][i](obj);
+                else
+                    return;
+        }
+    }
+
+    EmitToAll()
+    {
+
+    }
+}
+
+class WebSocketClient {
+    constructor(c)
+    {
+        this.c = c;
+        this.ip = c.ip;
+        this.events = [];
+    }
+
+    Event(n, obj)
+    {
+        if (this.events[n])
+        {
+            for (let i = 0; i < this.events[n].length; i++)
+                if (this.events[n][i])
+                    this.events[n][i](obj);
+                else
+                    return;
+        }
+    }
+
+    On(n, cb)
+    {
+        if (this.events[n])
+        {
+            this.events[n][this.events[n].length] = cb;
+        }
+        else
+        {
+            this.events[n] = [];
+            this.events[n][this.events[n].length] = cb;
+        }
+    }
+
+    Emit(n, obj)
+    {
+
     }
 }
 
