@@ -187,75 +187,209 @@ class Client {
 class WebSocketServer {
     constructor(port, cb)
     {
-        this.events = [];
+        const http = require("http");
+        const crypto = require("crypto");
 
-        this.events["connection"] = [];
-        this.events["error"] = [];
-        this.events["disconnected"] = [];
+        function GetWebSocketHeaders(heads)
+        {
+            var headers = {
+                host: heads.host,
+                origin: heads.origin,
+                version: +heads.version || -1
+            };
 
-        this.clients = [];
-
-        const http = require('http');
-
-        const wserver = http.createServer((req, res) => {
-            req.addListener('end', () => {console.log("ERRR")});
-        });
-
-        wserver.listen(port);
-
-        wserver.on("upgrade", (req, socket) => {
-            if (req.headers['upgrade'] !== 'websocket')
+            for (let i in heads)
             {
-                socket.end('HTTP/1.1 400 Bad Request');
-                return;
-            }
-        });
-
-        wserver.on("connection", (c) => {
-            c.id = Math.floor(Math.random() * 1000);
-            this.clients[c.id] = new WebSocketClient(c);
-
-            this.Event("connection", this.clients[c.id]);
-
-            c.on("end", () => {
-                this.Event("disconnected", this.clients[c.id]);
-
-                this.clients.splice(c.id, 1);
-            })
-
-            c.on('data', chunk => {
-                const bdata = chunk.toString();
-                let lastw = "";
-                let wtforevent = false;
-
-                for (let i = 0; i < bdata.length; i++)
+                if (i.substring(0, 14) === "sec-websocket-")
                 {
-                    if (bdata[i] != " ")
-                    {
-                        if (bdata[i] != "/")
-                            lastw += bdata[i];
-                    }
-                    else
-                    {
-                        if (lastw == "GET")
-                            wtforevent = true;
-                        else if (wtforevent)
-                        {
-                            const res = JSON.parse(decodeURIComponent(lastw));
-                            this.clients[c.id].Event(res.n, res.obj);
+                    headers[i.substring(14)] = heads[i];
+                }
+            }
 
-                            return;
-                        }
+            return headers;
+        };
 
-                        lastw = "";
+        function GetWebSocketHandshake(req, head)
+        {
+            function pack32(value)
+            {
+                return String.fromCharCode(value >> 24 & 0xFF)
+                    + String.fromCharCode(value >> 16 & 0xFF)
+                    + String.fromCharCode(value >> 8 & 0xFF)
+                    + String.fromCharCode(value & 0xFF);
+            }
+
+            var handshake = {
+                version: -1,
+                headers: null,
+                body: ''
+            };
+
+            var headers = GetWebSocketHeaders(req.headers);
+
+            if (headers.version !== -1 && 'origin' in headers)
+            {
+                var sha1 = crypto.createHash('sha1');
+                sha1.update(headers.key + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11');
+
+                handshake.version = 13;
+                handshake.headers = {
+                    'Sec-WebSocket-Version': headers.version,
+                    'Sec-WebSocket-Origin': headers.origin,
+                    'Sec-WebSocket-Accept': sha1.digest('base64')
+                };
+            }
+            else
+            {
+                var md5 = crypto.createHash('md5');
+
+                if ('key1' in headers && 'key2' in headers)
+                {
+                    let k = headers.key1;
+                    let l = headers.key2;
+                    let a = parseInt(k.replace(/[^\d]/g, ''), 10);
+                    let b = parseInt(l.replace(/[^\d]/g, ''), 10);
+                    let u = k.replace(/[^\ ]/g, '').length;
+                    let o = l.replace(/[^\ ]/g, '').length;
+
+                    if (!(u === 0 || o === 0 || a % u !== 0 || b % o !== 0))
+                    {
+                        md5.update(pack32(parseInt(a / u, 10)));
+                        md5.update(pack32(parseInt(b / o, 10)));
+                        md5.update(head.toString('binary'));
+
+                        handshake.version = 6;
+                        handshake.body = md5.digest('binary');
+                        handshake.headers = {
+                            'Sec-WebSocket-Origin': headers.origin,
+                            'Sec-WebSocket-Location': 'ws://' + headers.host + '/'
+                        };
                     }
                 }
-            });
+                else
+                {
+                    handshake.version = 6;
+                    handshake.body = md5.digest('binary');
+
+                    handshake.headers = {
+                        'WebSocket-Origin': headers.origin,
+                        'WebSocket-Location': 'ws://' + headers.host + '/'
+                    };
+                }
+            }
+
+            return handshake;
+        }
+
+        function CheckUpgrade(req)
+        {
+            var headers = req.headers;
+            return req.method === 'GET'
+                    && headers.hasOwnProperty('upgrade')
+                    && headers.hasOwnProperty('connection')
+                    && headers.upgrade.toLowerCase() === 'websocket'
+                    && headers.connection.toLowerCase().indexOf('upgrade') !== -1;
+        };
+
+        const server = new http.Server();
+        server.listen(port);
+
+        server.on("upgrade", (req, sock, heads) => {
+            const handshake = GetWebSocketHandshake(req, heads);
+
+            if (!CheckUpgrade(req))
+                return false;
+
+            if (handshake.version !== -1)
+            {
+                var data = 'HTTP/1.1 101 WebSocket Protocol Handshake\r\n'
+                        + 'Upgrade: WebSocket\r\n'
+                        + 'Connection: Upgrade\r\n';
+        
+                for (let i in handshake.headers)
+                {
+                    if (handshake.headers.hasOwnProperty(i))
+                    {
+                        data += i + ': ' + handshake.headers[i] + '\r\n';
+                    }
+                }
+        
+                data += '\r\n' + handshake.body;
+        
+                sock.write(data, 'ascii');
+        
+                sock.setTimeout(0);
+                sock.setNoDelay(true);
+                sock.setKeepAlive(true, 0);
+                sock.removeAllListeners('timeout');
+
+                sock.on("data", (data) => {
+
+                })
+            }
         });
 
         if (cb)
             cb();
     }
+
+    write(socket, data, binary, closed)
+    {
+        const enc = binary ? 'binary' : 'utf8';
+        const length = Buffer.byteLength(data, enc) + (closed ? 2 : 0);
+        var buffer;
+        var bytes = 2;
+
+        if (length > 0xffff) //64
+        {
+            var low = length | 0;
+            var hi = (length - low) / 4294967296;
+    
+            buffer = new Buffer(10 + length);
+            buffer[1] = 127;
+    
+            buffer[2] = (hi >> 24) & 0xff;
+            buffer[3] = (hi >> 16) & 0xff;
+            buffer[4] = (hi >> 8) & 0xff;
+            buffer[5] = hi & 0xff;
+    
+            buffer[6] = (low >> 24) & 0xff;
+            buffer[7] = (low >> 16) & 0xff;
+            buffer[8] = (low >> 8) & 0xff;
+            buffer[9] = low & 0xff;
+    
+            bytes += 8;
+        }
+        else if (length > 125) //16
+        {
+            buffer = new Buffer(4 + length);
+            buffer[1] = 126;
+    
+            buffer[2] = (length >> 8) & 0xff;
+            buffer[3] = length & 0xff;
+    
+            bytes += 2;
+        }
+        else
+        {
+            buffer = new Buffer(2 + length);
+            buffer[1] = length;
+        }
+    
+        buffer[0] = 128 + (closed ? 8 : (binary ? 2 : 1));
+        buffer[1] &= ~128;
+    
+        if (closed)
+        {
+            const code = String.fromCharCode((this.closeCode >> 8) & 0xff) + String.fromCharCode(this.closeCode & 0xff);
+    
+            buffer.write(code, bytes, 'binary');
+            bytes += 2;
+        }
+    
+        buffer.write(data, bytes, enc);
+        socket.write(buffer);
+    };
 
     OnInternal(n, cb)
     {
