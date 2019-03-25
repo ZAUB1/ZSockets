@@ -39,7 +39,7 @@ const Socket = require("zsockets");
 
 const WSS = new Socket.WebSocketServer(8080, () => {
     console.log("Listening on port 8080")
-})
+});
 
 WSS.OnInternal("connection", (c) => {
     c.Emit("blblbl");
@@ -73,15 +73,19 @@ Client.On("testall", () => {
   - [Class: Server](#server)
     - [new Socket.Server(port[, callback])](#new-socket.serverport-callback)
     - [Server.OnInternal(event[, callback])](#server.oninternalevent-callback)
-    -	[Server.EmitToAll(event[, object])](#server.emittoallevent-object)
+    - [Server.EmitToAll(event[, object])](#server.emittoallevent-object)
+  - [Class: Websocket Server](#server)
+    - [new Socket.Server(port[, callback])](#new-socket.serverport-callback)
+    - [Server.OnInternal(event[, callback])](#server.oninternalevent-callback)
+    - [Server.EmitToAll(event[, object])](#server.emittoallevent-object)
   - [Class: Client object (Server Side)](#clientobjectserverside)
-	  -	[Client.On(event[, callback])](#client.onevent-callback)
-	-	[Client.Emit(event[, object])](#client.emitevent-object)
-	- [Client.Ip](#client.ip)
-- [Class: Client](#client)
-	- 	[new Socket.Client(ip, port)](#new-socket.clientipport)
-	 -	[Client.On(event[, callback])](#client.onevent-callback)
-	-	[Client.Emit(event[, object])](#client.emitevent-object)
+    - [Client.On(event[, callback])](#client.onevent-callback)
+    - [Client.Emit(event[, object])](#client.emitevent-object)
+    - [Client.Ip](#client.ip)
+  - [Class: Client](#client)
+    - [new Socket.Client(ip, port)](#new-socket.clientipport)
+    - [Client.On(event[, callback])](#client.onevent-callback)
+    - [Client.Emit(event[, object])](#client.emitevent-object)
 ### Server
 
 #### new Socket.Server(port[, callback])
