@@ -1,7 +1,7 @@
 
 # ZSockets
 
-ZSockets is a fully standalone socket library built on top of the net standard library from node.
+ZSockets is a fully standalone socket library allowing both TCP and Websocket protocol.
 
 
 ## How to use
