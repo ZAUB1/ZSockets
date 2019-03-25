@@ -6,6 +6,11 @@ ZSockets is a fully standalone socket library allowing both TCP and Websocket pr
 
 ## How to use
 ZSockets is fairly simple to use, here are few examples on the way to use it :
+### Installation
+```
+# Installs the lib
+$ npm install zsockets
+```
 ### Server example
 Sample code:
 
