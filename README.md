@@ -33,6 +33,22 @@ setInterval(() => {
    Server.EmitToAll("testall", {}); //Event triggered on all clients
 }, 1000);
 ```
+### Websocket server example
+```js
+const Socket = require("zsockets");
+
+const WSS = new Socket.WebSocketServer(8080, () => {
+    console.log("Listening on port 8080")
+})
+
+WSS.OnInternal("connection", (c) => {
+    c.Emit("blblbl");
+
+    c.On("test", () => {
+        console.log("Back from client");
+    })
+});
+```
 ### Client example
 Sample code:
 
@@ -87,7 +103,21 @@ Client.On("testall", () => {
 - `event` _(string)_ Event name to trigger on all clients connected
 - `object` _(Object)_
 
-### Client object (server side)
+### Websocket server
+#### new Socket.WebSocketServer(port[, callback])
+  - `port` _(int)_ The port on which the clients will connect to the server.
+  - `callback` _(function)_
+#### WebSocketServer.OnInternal(event[, callback])
+- `event` _(string)_ The internal event name to listen to
+	- `"connection"`: Triggered when a new client connects
+		- Callback contains client _(Object)_
+	- `"disconnected"`: Triggered when a client disconnects
+		- Callback contains client _(Object)_
+#### Server.EmitToAll(event[, object])
+- `event` _(string)_ Event name to trigger on all clients connected
+- `object` _(Object)_
+
+### Client object (server side, both TCP & WebSocket)
 
 #### Client.On(event[, callback])
 - `event` _(string)_ The server event name to listen for client trigger
