@@ -38,7 +38,7 @@ setInterval(() => {
 const Socket = require("zsockets");
 
 const WSS = new Socket.WebSocketServer(8080, () => {
-    console.log("Listening on port 8080")
+    console.log("Listening on port 8080");
 });
 
 WSS.OnInternal("connection", (c) => {
@@ -46,7 +46,7 @@ WSS.OnInternal("connection", (c) => {
 
     c.On("test", () => {
         console.log("Back from client");
-    })
+    });
 });
 ```
 ### Client example
