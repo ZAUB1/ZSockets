@@ -184,11 +184,71 @@ class Client {
     }
 };
 
+WsWriteSock = function(socket, data, binary, closed)
+{
+    const enc = binary ? 'binary' : 'utf8';
+    const length = Buffer.byteLength(data, enc) + (0);
+
+    var buffer;
+    var bytes = 2;
+
+    if (length > 0xffff) //64
+    {
+        var low = length | 0;
+        var hi = (length - low) / 4294967296;
+
+        buffer = new Buffer(10 + length);
+        buffer[1] = 127;
+
+        buffer[2] = (hi >> 24) & 0xff;
+        buffer[3] = (hi >> 16) & 0xff;
+        buffer[4] = (hi >> 8) & 0xff;
+        buffer[5] = hi & 0xff;
+
+        buffer[6] = (low >> 24) & 0xff;
+        buffer[7] = (low >> 16) & 0xff;
+        buffer[8] = (low >> 8) & 0xff;
+        buffer[9] = low & 0xff;
+
+        bytes += 8;
+    }
+    else if (length > 125) //16
+    {
+        buffer = new Buffer(4 + length);
+        buffer[1] = 126;
+
+        buffer[2] = (length >> 8) & 0xff;
+        buffer[3] = length & 0xff;
+
+        bytes += 2;
+    }
+    else
+    {
+        buffer = new Buffer(2 + length);
+        buffer[1] = length;
+    }
+
+    buffer[0] = 128 + (closed ? 8 : (binary ? 2 : 1));
+    buffer[1] &= ~128;
+
+    buffer.write(data, bytes, enc);
+    socket.write(buffer);
+};
+
 class WebSocketServer {
     constructor(port, cb)
     {
         const http = require("http");
         const crypto = require('crypto');
+
+        this.clients = [];
+        this.events = [];
+
+        //Usual events
+        this.events["connection"] = [];
+        this.events["error"] = [];
+        this.events["disconnected"] = [];
+        this.events["cerror"] = [];
 
         const server = new http.Server();
         server.listen(port);
@@ -323,9 +383,24 @@ class WebSocketServer {
                 sock.setKeepAlive(true, 0);
                 sock.removeAllListeners('timeout');
 
+                sock.id = Math.floor(Math.random() * 1000);
+                this.clients[sock.id] = new WebSocketClient(sock);
+                this.Event("connection", this.clients[sock.id]);
+
                 sock.on("data", (data) => {
-                    console.log(this.GetMessage(data, this.GetProtocol(data)));
-                })
+                    var dtjs = "";
+
+                    try
+                    {
+                        dtjs = JSON.parse(this.GetMessage(data, this.GetProtocol(data)));
+                    }
+                    catch (err)
+                    {
+                        //
+                    }
+
+                    this.clients[sock.id].Event(dtjs.n, dtjs.obj);
+                });
             }
         });
 
@@ -354,7 +429,7 @@ class WebSocketServer {
             return false;
 
         protocol.opcode = data[0] & 0x0f;
-    
+
         protocol.mask = this.GetOneBit(data[1], 0x80);
         protocol.payload_len = data[1] & 0x7f;
 
@@ -369,7 +444,7 @@ class WebSocketServer {
         }
         else if (protocol.payload_len == 127)
         {
-            if(data[2] != 0 || data[3] != 0 || data[4] != 0 || data[5] != 0)
+            if (data[2] != 0 || data[3] != 0 || data[4] != 0 || data[5] != 0)
                 return false;
 
             protocol.start += 8;
@@ -417,6 +492,7 @@ class WebSocketServer {
 
         protocol.len = protocol.len - buflen;
         protocol.start = 0;
+
         protocol.msg += buffer.toString();
 
         return protocol.msg;
@@ -447,9 +523,11 @@ class WebSocketServer {
         }
     }
 
-    EmitToAll()
+    EmitToAll(n, obj)
     {
-
+        this.clients.forEach((e) => {
+            e.Emit(n, obj);
+        });
     }
 }
 
@@ -488,7 +566,7 @@ class WebSocketClient {
 
     Emit(n, obj)
     {
-
+        WsWriteSock(this.c, JSON.stringify({n: n, obj: obj}));
     }
 }
 
