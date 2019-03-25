@@ -188,7 +188,10 @@ class WebSocketServer {
     constructor(port, cb)
     {
         const http = require("http");
-        const crypto = require("crypto");
+        const crypto = require('crypto');
+
+        const server = new http.Server();
+        server.listen(port);
 
         function GetWebSocketHeaders(heads)
         {
@@ -214,9 +217,9 @@ class WebSocketServer {
             function pack32(value)
             {
                 return String.fromCharCode(value >> 24 & 0xFF)
-                    + String.fromCharCode(value >> 16 & 0xFF)
-                    + String.fromCharCode(value >> 8 & 0xFF)
-                    + String.fromCharCode(value & 0xFF);
+                       + String.fromCharCode(value >> 16 & 0xFF)
+                       + String.fromCharCode(value >> 8 & 0xFF)
+                       + String.fromCharCode(value & 0xFF);
             }
 
             var handshake = {
@@ -291,9 +294,6 @@ class WebSocketServer {
                     && headers.connection.toLowerCase().indexOf('upgrade') !== -1;
         };
 
-        const server = new http.Server();
-        server.listen(port);
-
         server.on("upgrade", (req, sock, heads) => {
             const handshake = GetWebSocketHandshake(req, heads);
 
@@ -305,7 +305,7 @@ class WebSocketServer {
                 var data = 'HTTP/1.1 101 WebSocket Protocol Handshake\r\n'
                         + 'Upgrade: WebSocket\r\n'
                         + 'Connection: Upgrade\r\n';
-        
+
                 for (let i in handshake.headers)
                 {
                     if (handshake.headers.hasOwnProperty(i))
@@ -313,18 +313,18 @@ class WebSocketServer {
                         data += i + ': ' + handshake.headers[i] + '\r\n';
                     }
                 }
-        
+
                 data += '\r\n' + handshake.body;
-        
-                sock.write(data, 'ascii');
-        
+
+                sock.write(data, 'utf-8');
+
                 sock.setTimeout(0);
                 sock.setNoDelay(true);
                 sock.setKeepAlive(true, 0);
                 sock.removeAllListeners('timeout');
 
                 sock.on("data", (data) => {
-
+                    console.log(this.GetMessage(data, this.GetProtocol(data)));
                 })
             }
         });
@@ -333,62 +333,93 @@ class WebSocketServer {
             cb();
     }
 
-    write(socket, data, binary, closed)
+    GetOneBit(data, hex)
     {
-        const enc = binary ? 'binary' : 'utf8';
-        const length = Buffer.byteLength(data, enc) + (closed ? 2 : 0);
-        var buffer;
-        var bytes = 2;
+        return (data & hex) == hex ? 1 : 0;
+    };
 
-        if (length > 0xffff) //64
+    GetProtocol(data)
+    {
+        var protocol = {
+            start : 2,
+            msg : ''
+        };
+
+        protocol.fin = this.GetOneBit(data[0], 0x80);
+        protocol.rsv1 = this.GetOneBit(data[0], 0x40);
+        protocol.rsv2 = this.GetOneBit(data[0], 0x20);
+        protocol.rsv3 = this.GetOneBit(data[0], 0x10);
+
+        if (protocol.rsv1 != 0 || protocol.rsv2 != 0 || protocol.rsv3 != 0)
+            return false;
+
+        protocol.opcode = data[0] & 0x0f;
+    
+        protocol.mask = this.GetOneBit(data[1], 0x80);
+        protocol.payload_len = data[1] & 0x7f;
+
+        if (protocol.payload_len >= 0 && protocol.payload_len <= 125)
         {
-            var low = length | 0;
-            var hi = (length - low) / 4294967296;
-    
-            buffer = new Buffer(10 + length);
-            buffer[1] = 127;
-    
-            buffer[2] = (hi >> 24) & 0xff;
-            buffer[3] = (hi >> 16) & 0xff;
-            buffer[4] = (hi >> 8) & 0xff;
-            buffer[5] = hi & 0xff;
-    
-            buffer[6] = (low >> 24) & 0xff;
-            buffer[7] = (low >> 16) & 0xff;
-            buffer[8] = (low >> 8) & 0xff;
-            buffer[9] = low & 0xff;
-    
-            bytes += 8;
+            protocol.len = protocol.payload_len;
         }
-        else if (length > 125) //16
+        else if (protocol.payload_len == 126)
         {
-            buffer = new Buffer(4 + length);
-            buffer[1] = 126;
-    
-            buffer[2] = (length >> 8) & 0xff;
-            buffer[3] = length & 0xff;
-    
-            bytes += 2;
+            protocol.start += 2;
+            protocol.len = (data[2] << 8) + data[3];
+        }
+        else if (protocol.payload_len == 127)
+        {
+            if(data[2] != 0 || data[3] != 0 || data[4] != 0 || data[5] != 0)
+                return false;
+
+            protocol.start += 8;
+            protocol.len = data.readUInt32BE(6);
         }
         else
         {
-            buffer = new Buffer(2 + length);
-            buffer[1] = length;
+            return false;
         }
-    
-        buffer[0] = 128 + (closed ? 8 : (binary ? 2 : 1));
-        buffer[1] &= ~128;
-    
-        if (closed)
+
+        if (protocol.mask)
         {
-            const code = String.fromCharCode((this.closeCode >> 8) & 0xff) + String.fromCharCode(this.closeCode & 0xff);
-    
-            buffer.write(code, bytes, 'binary');
-            bytes += 2;
+            protocol.mask_key = data.slice(protocol.start, protocol.start + 4);
+            protocol.start += 4;
         }
-    
-        buffer.write(data, bytes, enc);
-        socket.write(buffer);
+        else
+        {
+            return false;
+        }
+
+        return protocol;
+    };
+
+    GetMessage(data, protocol)
+    {
+        var buflen = data.length - protocol.start;
+
+        if (buflen > protocol.len)
+        {
+            buflen = protocol.len;
+            protocol.data = data.slice(buflen);
+            protocol.sliced = true;
+        }
+        else
+        {
+            protocol.sliced = false;
+        }
+
+        var buffer = new Buffer(buflen);
+
+        for (var i = protocol.start, j = 0, k = protocol.msg.length; i < data.length; i++, j++, k++)
+        {
+            buffer[j] = data[i] ^ protocol.mask_key[k % 4];
+        }
+
+        protocol.len = protocol.len - buflen;
+        protocol.start = 0;
+        protocol.msg += buffer.toString();
+
+        return protocol.msg;
     };
 
     OnInternal(n, cb)
