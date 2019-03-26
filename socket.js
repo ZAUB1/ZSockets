@@ -1,8 +1,8 @@
-const net = require("net");
-
 class Server {
     constructor(port, cb)
     {
+        const net = require("net");
+        
         this.events = [];
 
         //Usual events
@@ -129,6 +129,8 @@ class ServerClient {
 class Client {
     constructor(ip, port)
     {
+        const net = require("net");
+        
         this.events = [];
 
         this.events["connect"] = [];
