@@ -72,6 +72,8 @@ Client.On("testall", () => {
     console.log("All clients yay !");
 });
 ```
+### Web Client
+=> https://github.com/ZAUB1/zsockets-webclient
 ## Documentation
 ### Table of Contents
 
