@@ -1,3 +1,14 @@
+const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+const RandStr = (length) => {
+    let text = "";
+
+    for (var i = 0; i < length; i++)
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+    return text;
+}
+
 class Server {
     constructor(port, cb)
     {
@@ -402,6 +413,12 @@ class WebSocketServer {
                     }
 
                     this.clients[sock.id].Event(dtjs.n, dtjs.obj);
+                });
+                
+                sock.on("end", () => {
+                    this.Event("disconnected", this.clients[sock.id]);
+
+                    this.clients.splice(sock.id, 1);
                 });
             }
         });
