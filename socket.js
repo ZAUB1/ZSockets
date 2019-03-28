@@ -406,13 +406,12 @@ class WebSocketServer {
                     try
                     {
                         dtjs = JSON.parse(this.GetMessage(data, this.GetProtocol(data)));
+                        this.clients[sock.id].Event(dtjs.n, dtjs.obj);
                     }
                     catch (err)
                     {
                         //
                     }
-
-                    this.clients[sock.id].Event(dtjs.n, dtjs.obj);
                 });
                 
                 sock.on("end", () => {
